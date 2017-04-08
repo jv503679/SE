@@ -13,10 +13,10 @@ if python3:
 if(len(sys.argv) != 2) :
         print("Erreur : mauvais nombre d'arguments.\npython server.py port")
         sys.exit()
-
-ip = sys.argv[1]
+        
+ip = "localhost"
 try:
-        port = int(sys.argv[2])
+        port = int(sys.argv[1])
 except:
         print("Erreur: port incorrect")
 
@@ -28,7 +28,7 @@ max_saved_messages = 10
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1) #evite l'erreur "Adress already in use" lorsqu'on relance le serveur sur le même (ip,port)
 try:
-        server.bind(("localhost", port))
+        server.bind((ip, port))
 except:
         print("Erreur: port incorrect")
 server.listen(20)
