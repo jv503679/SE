@@ -28,6 +28,8 @@ try:
         port = int(sys.argv[2])
 except:
         print("Erreur: port incorrect")
+        sys.exit()
+        
 name = sys.argv[3]
 
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
