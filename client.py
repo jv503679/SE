@@ -4,6 +4,12 @@
 import socket, select, string, sys
 import os, signal
 
+running_version = sys.version_info[0]
+python3 = (running_version == 3)
+if python3:
+        print("Veuillez lancer le programme avec la commande python (pas python3)")
+        sys.exit()
+
 def handler(signal, frame):
         print('\rDeconnexion du chat')
         server.send("\quit")
