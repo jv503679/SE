@@ -19,6 +19,7 @@ try:
         port = int(sys.argv[1])
 except:
         print("Erreur: port incorrect")
+        sys.exit()
 
 socketlist = []
 client = {}
