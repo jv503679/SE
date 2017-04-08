@@ -10,6 +10,8 @@ def handler(signal, frame):
         sys.exit()
         
 signal.signal(signal.SIGINT, handler)
+signal.signal(signal.SIGTERM, handler)
+signal.signal(signal.SIGHUP, handler)
 
 if(len(sys.argv) != 4) :
         print("Erreur : mauvais nombre d'arguments.\npython client.py host port username")
@@ -21,10 +23,6 @@ name = sys.argv[3]
 
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 os.system("clear")
-
-def write() :
-	sys.stdout.write(name +" >> ") #affiche le nom sur le terminal
-	sys.stdout.flush()             #ne compte pas le nom affiché
 
 try :
         server.connect((host, port))
@@ -41,15 +39,23 @@ while True:
         
         for socket in rsocket:
                 if socket == server:
-                        data = socket.recv(4096)
-                        if data :
-                                sys.stdout.write(data)   #On écrit le message du serveur sur l'entrée standard (terminal)
-                                write()
+                        message = socket.recv(4096)
+                        if message :
+                                sys.stdout.write(message)      #On écrit le message du serveur sur l'entrée standard (terminal)
+                                sys.stdout.write(name +" >> ") #affiche le nom sur le terminal
+                                sys.stdout.flush()             #ne compte pas le nom affiché
                         else :
                                 print('\rVous avez été deconnecté')
                                 sys.exit()
                 else :
-                        msg = sys.stdin.readline()
-                        server.send(msg)
-                        write()
+                        message = sys.stdin.readline()
+                        if(not message):
+                                print('\rDeconnexion du chat')
+                                server.send("\quit")
+                                sys.exit()
+                        if(message.replace(" ", "") != "\n"):
+                                server.send(message)
+                        sys.stdout.write(name +" >> ") #affiche le nom sur le terminal
+                        sys.stdout.flush()             #ne compte pas le nom affiché
 
+server.close()
