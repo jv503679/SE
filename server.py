@@ -4,6 +4,12 @@
 import socket, select, sys, signal, os, time
 from multiprocessing import Queue
 
+running_version = sys.version_info[0]
+python3 = (running_version == 3)
+if python3:
+        print("Veuillez lancer le programme avec la commande python (pas python3)")
+        sys.exit()
+
 if(len(sys.argv) != 3) :
         print("Erreur : mauvais nombre d'arguments.\npython server.py host port")
         sys.exit()
