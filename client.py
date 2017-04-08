@@ -24,7 +24,10 @@ if(len(sys.argv) != 4) :
         sys.exit()
 
 host = sys.argv[1]
-port = int(sys.argv[2])
+try:
+        port = int(sys.argv[2])
+except:
+        print("Erreur: port incorrect")
 name = sys.argv[3]
 
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
