@@ -4,6 +4,10 @@
 import socket, select, sys, signal, os, time
 from multiprocessing import Queue
 
+if(len(sys.argv) != 3) :
+        print("Erreur : mauvais nombre d'arguments.\npython server.py host port")
+        sys.exit()
+
 ip = sys.argv[1]
 port = int(sys.argv[2])
 socketlist = []
