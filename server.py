@@ -32,6 +32,8 @@ try:
         server.bind((ip, port))
 except:
         print("Erreur: port incorrect")
+        sys.exit()
+        
 server.listen(20)
 SHUT_RDWR = socket.SHUT_RDWR
 
