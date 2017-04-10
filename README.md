@@ -1,4 +1,6 @@
 # Projet de CHAT IRC
+Connexion multiples / déconnexions  
+Gestion de la connexion via le web // sauvegarde des derniers messages envoyés  
 Gestion des usernames (pas de duplicate)  
 Gestion des messages privés (@Username message)  
 Gestion des commandes (\quit, \list, \info, \command)  
