@@ -238,17 +238,20 @@ while True:
                                         send_last_messages(newsocket)
                                 send_to_all_users(server, "\r<SERVEUR> ({}) ".format(time.strftime("%H:%M")),"{} vient de se connecter\n".format(name))  #message pour les utilisateurs (avec seulement le nom)
                                 print("{} : {} s'est connecté {}".format(time.strftime("%H:%M:%S"), name, ipport))
-
+                
+                #Si c'est un client web
                 elif socket == server_web:
                         web, ipport = server_web.accept()
                         request = web.recv(4096)
-                        if request:
+                        print("Client web connecté {}".format(ipport))
+                        if request:  #Si on reçoit une requête
                                 web.send('HTTP/1.0 200 OK\n')            #on répond à la requete
                                 web.send('Content-Type: text/html\n\n')  #on annonce le type de contenu
                                 web.send(page_html())                    #et là tu met le sauce
+                                print("Envoi des informations au client web {}".format(ipport))
                         web.close()                                      #et on ferme
                         
-                #Si ce n'est pas une connexion, alors c'est un message reçu
+                #Si ce n'est pas une connexion (client ou web), alors c'est un message reçu (client)
                 else:
                         try:
                                 message = socket.recv(4096)  #On récupère le message
