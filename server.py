@@ -24,7 +24,7 @@ except:
 socketlist = []
 client = {}
 saved_messages = Queue()
-max_saved_messages = 10
+max_saved_messages = 5
 
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1) #evite l'erreur "Adress already in use" lorsqu'on relance le serveur sur le même (ip,port)
@@ -40,7 +40,7 @@ SHUT_RDWR = socket.SHUT_RDWR
 socketlist.append(server) #on rajoute le serveur à la liste des sockets
 
 #Message de lancement du serveur
-print("|=================|\n| Chat IRC débuté |\n|=================|\n -- IP: {}\n -- PORT: {}\n|=================|\n -- VICTOR JUNG\n|=================|".format(ip, port))
+print("|=================|\n| Chat IRC débuté |\n|=================|\n -- IP: {}\n -- PORT: {}\n|=================|\n -- VICTOR JUNG\n -- STEVE MALALEL\n|=================|".format(ip, port))
 
 
 #Handler pour la fermeture du serveur (CTRL+C)
@@ -189,6 +189,23 @@ def send_last_messages(socket):
                 message += msg
         socket.send(message)
 
+def page_html():
+        code = "<html>\n"
+        code +="<head> <meta charset = 'utf-8'></head>\n"
+        code +="<body>\n"
+        code +="<h1>Les 5 derniers message envoyés</h1>\n"
+        code +="<ul>\n"
+        for m in last_messages_list(saved_messages) :
+                       code +="<li>"
+                       code += m
+                       code +="</li>\n"
+        code +="</ul>\n"
+        code +="</body>\n"
+        code +="</html>"
+        f = open("last_messages.html","w")
+        f.write(code)
+        f.close()
+
 #Serveur
 while True:
         #On récupère les sockets prêts via select.select
@@ -229,6 +246,7 @@ while True:
                                                 if (not private_message_handler(message, socket, user)):  #on teste s'il s'agit d'un message privé (si oui => True)
                                                         send_to_all_users(socket, "\r{} >> ".format((client[user])), message)  #on envoie le message à tous les clients (sauf serveur et client qui envoie le message)
                                                         add_to_saved_messages(client[user], message)
+                                                        page_html()
 
                         #En cas d'erreur, on déconnecte le client ayant engendré l'erreur, et on continue le programme (pas de plantage du serveur)
                         except:
