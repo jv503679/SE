@@ -10,44 +10,54 @@ if python3:
         print("Veuillez lancer le programme avec la commande python (pas python3)")
         sys.exit()
 
-if(len(sys.argv) != 2) :
-        print("Erreur : mauvais nombre d'arguments.\npython server.py port")
+if(len(sys.argv) != 3) :
+        print("Erreur : mauvais nombre d'arguments.\npython server.py port port_web")
         sys.exit()
         
 ip = "localhost"
 try:
         port = int(sys.argv[1])
+        port_web = int(sys.argv[2])
 except:
         print("Erreur: port incorrect")
         sys.exit()
 
 socketlist = []
+
 client = {}
 saved_messages = Queue()
 max_saved_messages = 5
 
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1) #evite l'erreur "Adress already in use" lorsqu'on relance le serveur sur le même (ip,port)
+
+server_web = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+server_web.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+
 try:
         server.bind((ip, port))
+        server_web.bind((ip, port_web))
 except:
         print("Erreur: port incorrect")
         sys.exit()
         
-server.listen(20)
+server.listen(1)
+server_web.listen(1)
+
 SHUT_RDWR = socket.SHUT_RDWR
 
 socketlist.append(server) #on rajoute le serveur à la liste des sockets
+socketlist.append(server_web) #on rajoute également le serveur web
 
 #Message de lancement du serveur
-print("|=================|\n| Chat IRC débuté |\n|=================|\n -- IP: {}\n -- PORT: {}\n|=================|\n -- VICTOR JUNG\n -- STEVE MALALEL\n|=================|".format(ip, port))
+print("|=================|\n| Chat IRC débuté |\n|=================|\n -- IP: {}\n -- PORT: {}\n -- WEB: {}\n|=================|\n -- VICTOR JUNG\n -- STEVE MALALEL\n|=================|".format(ip, port, port_web))
 
 
 #Handler pour la fermeture du serveur (CTRL+C)
 def handler(signal, none):
         print("\r!! FERMETURE DU SERVEUR !!")
         for socket in socketlist:   #on ferme chaque socket disponible
-                if socket != server :
+                if socket != server and socket != server_web:
                         user = socket.getpeername()
                         print("{} a été déconnecté {}".format(client[user], user))
                 socket.shutdown(SHUT_RDWR)
@@ -60,7 +70,7 @@ signal.signal(signal.SIGINT, handler)
 #Fonction pour envoyer les messages aux utilisateurs
 def send_to_all_users (initial_socket, username, message):
         for socket in socketlist:   #Pour tous les sockets...
-                if socket != server and socket != initial_socket :  #... qui ne sont pas le serveur ni le client ayant envoyé le message...
+                if socket != server and socket != server_web and socket != initial_socket :  #... qui ne sont pas le serveur ni le client ayant envoyé le message...
                         try:
                                 socket.send(username + message)   #on envoie le message
                         except:  #erreur si le socket n'existe plus mais est toujours ouvert... donc on le ferme et on le remove de la liste
@@ -85,6 +95,7 @@ def send_server_information(socket):
         message = "\r  |============================|\n  | Information sur le serveur |\n  |============================|\n"
         message += "  | -- IP : "+str(ip)+"\n"
         message += "  | -- PORT : "+str(port)+"\n"
+        message += "  | -- WEB : "+str(port_web)+"\n"
         message += "  | -- "+str(len(client))+" CLIENT"+S+"\n"
         message += "  |============================|\n\n"
         socket.send(message)
@@ -174,7 +185,7 @@ def command_handler(command, socket, user):
 def add_to_saved_messages(user, message):
         if(saved_messages.qsize() >= max_saved_messages):
                 saved_messages.get()
-        saved_messages.put("\r("+time.strftime("%H:%M")+") " + user + ">> " + message)
+        saved_messages.put("("+time.strftime("%H:%M")+") " + user + ">> " + message)
 
 def last_messages_list(last_messages):
         liste = [last_messages.get() for i in range(last_messages.qsize())]
@@ -190,21 +201,15 @@ def send_last_messages(socket):
         socket.send(message)
 
 def page_html():
-        code = "<html>\n"
-        code +="<head> <meta charset = 'utf-8'></head>\n"
-        code +="<body>\n"
-        code +="<h1>Les 5 derniers message envoyés</h1>\n"
-        code +="<ul>\n"
-        for m in last_messages_list(saved_messages) :
-                       code +="<li>"
-                       code += m
-                       code +="</li>\n"
-        code +="</ul>\n"
-        code +="</body>\n"
-        code +="</html>"
-        f = open("last_messages.html","w")
-        f.write(code)
-        f.close()
+        code = "<head><meta charset='utf-8'><title>CHAT IRC</title></head><body>"
+        code +="<h1>Les {} derniers message envoyés</h1>".format(max_saved_messages)
+        code +="<ul>"
+        liste = last_messages_list(saved_messages)
+        for m in liste :
+                m = m.replace("\r","")
+                code += "<li>"+m+"</li>"
+        code +="</ul></body></html>"
+        return code
 
 #Serveur
 while True:
@@ -233,7 +238,16 @@ while True:
                                         send_last_messages(newsocket)
                                 send_to_all_users(server, "\r<SERVEUR> ({}) ".format(time.strftime("%H:%M")),"{} vient de se connecter\n".format(name))  #message pour les utilisateurs (avec seulement le nom)
                                 print("{} : {} s'est connecté {}".format(time.strftime("%H:%M:%S"), name, ipport))
-                                
+
+                elif socket == server_web:
+                        web, ipport = server_web.accept()
+                        request = web.recv(4096)
+                        if request:
+                                web.send('HTTP/1.0 200 OK\n')            #on répond à la requete
+                                web.send('Content-Type: text/html\n\n')  #on annonce le type de contenu
+                                web.send(page_html())                    #et là tu met le sauce
+                        web.close()                                      #et on ferme
+                        
                 #Si ce n'est pas une connexion, alors c'est un message reçu
                 else:
                         try:
@@ -246,7 +260,6 @@ while True:
                                                 if (not private_message_handler(message, socket, user)):  #on teste s'il s'agit d'un message privé (si oui => True)
                                                         send_to_all_users(socket, "\r{} >> ".format((client[user])), message)  #on envoie le message à tous les clients (sauf serveur et client qui envoie le message)
                                                         add_to_saved_messages(client[user], message)
-                                                        page_html()
 
                         #En cas d'erreur, on déconnecte le client ayant engendré l'erreur, et on continue le programme (pas de plantage du serveur)
                         except:
