@@ -41,8 +41,8 @@ except:
         print("Erreur: port incorrect")
         sys.exit()
         
-server.listen(1)
-server_web.listen(1)
+server.listen(10)
+server_web.listen(10)
 
 SHUT_RDWR = socket.SHUT_RDWR
 
@@ -80,15 +80,15 @@ def send_to_all_users (initial_socket, username, message):
                                 socketlist.remove(socket)
 
 #Envoie de la liste de tous les clients connectés au serveur (dans le dictionnaire client) (automatique à chaque connexion, \list)
-def send_all_connected_users(socket):
+def all_connected_users():
         message = "\r  |==================================|\n  | Clients connectés sur le serveur |\n  |==================================|\n"
         for clients in client:
                 message += "\r  | -- "+client[clients]+"\n"
         message += "\r  |==================================|\n\n"
-        socket.send(message)
+        return message
 
 #Envoie des informations à propos du serveur (ip, port, nombre de client) \info
-def send_server_information(socket):
+def server_information():
         S = ""
         if(len(client) > 1) :
                 S = "S"
@@ -98,10 +98,10 @@ def send_server_information(socket):
         message += "  | -- WEB : "+str(port_web)+"\n"
         message += "  | -- "+str(len(client))+" CLIENT"+S+"\n"
         message += "  |============================|\n\n"
-        socket.send(message)
+        return message
 
 #Envoie des informations à propos des commandes disponibles sur le chat (automatique à chaque connexion, \command)
-def send_command_info(socket):
+def command_info():
         message = "\r  |===============================|\n  |     Commandes disponibles     |\n  |===============================|\n"
         message += "  | -- \quit : deconnexion\n"
         message += "  | -- \info : informations sur\n"
@@ -112,6 +112,14 @@ def send_command_info(socket):
         message += "  | @Username : envoie un message\n"
         message += "  |             privé à Username\n"
         message += "  |===============================|\n\n"
+        return message
+
+def send_new_connection(socket, name):
+        message = command_info()
+        message += all_connected_users()
+        if(saved_messages.qsize() > 0):
+                message += last_messages()
+        message += "\r<SERVEUR> ({}) {} vient de se connecter\n".format(time.strftime("%H:%M"), name)
         socket.send(message)
 
 #Cherche le socket d'un utilisateur à partir de son username (pas de duplicate dans les usernames)
@@ -162,22 +170,23 @@ def private_message_handler(message, socket, user):
 def command_handler(command, socket, user):
         if(command == "\quit"):
                 send_to_all_users(socket, "\r<SERVEUR> {}".format(str(client[user])), " s'est déconnecté\n")
-                print("{} s'est déconnecté {}".format(client[user], user))
+                socket.send("\rDéconnexion")
+                print("{} : {} s'est déconnecté {}".format(time.strftime("%H:%M:%S"),client[user], user))
                 socket.close()
                 del client[user]
                 socketlist.remove(socket)
                 return False
 
         if(command == "\list"):
-                send_all_connected_users(socket)
+                socket.send(all_connected_users())
                 return False
         
         if(command == "\info"):
-                send_server_information(socket)
+                socket.send(server_information())
                 return False
         
         if(command == "\command"):
-                send_command_info(socket)
+                socket.send(command_info())
                 return False
         
         return True
@@ -193,12 +202,12 @@ def last_messages_list(last_messages):
                 last_messages.put(i)
         return liste
 
-def send_last_messages(socket):
+def last_messages():
         last_messages = last_messages_list(saved_messages)
         message = "\r"
         for msg in last_messages:
                 message += msg
-        socket.send(message)
+        return message
 
 def page_html():
         code = "<head><meta charset='utf-8'><title>CHAT IRC</title></head><body>"
@@ -232,26 +241,20 @@ while True:
                         else:
                                 #Sinon, on rajoute le client à la liste des clients, on envoie l'information de la connexion aux autres utilisateurs
                                 client[ipport] = name         #on rajoute au dictionnaire le couple (ip,port):name pour identifier les utilisateurs                        print("{} vient de se connecter {}".format(name, ipport))     #message pour le serveur (avec (ip,port) du client)
-                                send_command_info(newsocket)
-                                send_all_connected_users(newsocket)
-                                if(saved_messages.qsize() > 0):
-                                        send_last_messages(newsocket)
-                                send_to_all_users(server, "\r<SERVEUR> ({}) ".format(time.strftime("%H:%M")),"{} vient de se connecter\n".format(name))  #message pour les utilisateurs (avec seulement le nom)
+                                send_new_connection(newsocket, name)
+                                send_to_all_users(newsocket, "\r<SERVEUR> ({}) ".format(time.strftime("%H:%M")),"{} vient de se connecter\n".format(name))  #message pour les utilisateurs (avec seulement le nom)
                                 print("{} : {} s'est connecté {}".format(time.strftime("%H:%M:%S"), name, ipport))
-                
-                #Si c'est un client web
+
                 elif socket == server_web:
                         web, ipport = server_web.accept()
                         request = web.recv(4096)
-                        print("Client web connecté {}".format(ipport))
-                        if request:  #Si on reçoit une requête
+                        if request:
                                 web.send('HTTP/1.0 200 OK\n')            #on répond à la requete
                                 web.send('Content-Type: text/html\n\n')  #on annonce le type de contenu
                                 web.send(page_html())                    #et là tu met le sauce
-                                print("Envoi des informations au client web {}".format(ipport))
                         web.close()                                      #et on ferme
                         
-                #Si ce n'est pas une connexion (client ou web), alors c'est un message reçu (client)
+                #Si ce n'est pas une connexion, alors c'est un message reçu
                 else:
                         try:
                                 message = socket.recv(4096)  #On récupère le message
