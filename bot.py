@@ -9,13 +9,14 @@ import sys, socket, os, select, time , re
 # - Connexion multiple
 # - Envoi d'un message
 # - Réception du message
-# - Envois multiples / Reception multiple
+# - Envoi multiple / Reception multiple
 # - Connexion web - recupération des derniers messages
 #
 #On utilise le modèle père/fils pour tester l'envoi/réception.
 
 host = "localhost"
 port = 2555
+port_web = 2556
 
 #Connexion / Déconnexion
 def test1():
@@ -61,6 +62,7 @@ def test1():
                     sys.exit()
     server.close()
 
+#Connexion multiples, envoi/réception unique
 def test2():
     try:
         client1 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -98,6 +100,7 @@ def test2():
     client1.close()
     client2.close()
 
+#Envoi/réception multiple
 def test3() :
     client1 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     client2 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -145,8 +148,33 @@ def test3() :
     client2.close()
     client3.close()
 
-#test4() pour connexion web
+#Connexion + requête web
+def test4():
+    client_web = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    fake_client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    
+    client_web.connect((host, port_web))
+    fake_client.connect((host, port_web))
+    
+    client_web.send("GET / HTTP/1.0")
+    fake_client.send("Coucou passe le web stp")
+    
+    html = client_web.recv(4096)
+    error = fake_client.recv(4096)
 
+    client_web.close()
+    fake_client.close()
+
+    match_web = re.match("HTTP/1.0 200 OK\n", html)
+    match_err = re.match('\rRequête non valide.\n', error)
+    
+    if match_web and match_err :
+        print("Test web : ok")
+    else:
+        print("Test web : fail")
+        sys.exit()
+
+#Commandes \info
 def test5() :
     client1 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     client1.connect((host, port))
@@ -155,8 +183,8 @@ def test5() :
     message_de_connexion_1 = client1.recv(4096)
     client1.send("\info\n")
     message_1 = client1.recv(4096)
-    print(message_1) #pour voir visuellement le message reçu , à enlever
-    if re.match(r"(.)*Information(.)*",message_1) is not None : #http://apprendre-python.com/page-expressions-regulieres-regular-python
+    match = re.match("| Information sur le serveur |", message_1)
+    if match:
         print("Test commande \\info : ok")
     else :
         print("Test commande \\info : fail")
@@ -167,9 +195,10 @@ if pid == 0:
     os.system("xterm -e python server.py 2555 2556")
 else:
     time.sleep(2)
-    test1() #à revoir
+    test1()
     test2()
     test3()
-    #test4()
-    test5() #à revoir
+    test4()
+    test5()
+    
 sys.exit()
