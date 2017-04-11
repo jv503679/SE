@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-import socket, select, sys, signal, os, time
+import socket, select, sys, signal, os, time, re
 from multiprocessing import Queue
 
 running_version = sys.version_info[0]
@@ -248,10 +248,13 @@ while True:
                 elif socket == server_web:
                         web, ipport = server_web.accept()
                         request = web.recv(4096)
+                        request = re.match("GET / HTTP/", request)
                         if request:
                                 web.send('HTTP/1.0 200 OK\n')            #on répond à la requete
                                 web.send('Content-Type: text/html\n\n')  #on annonce le type de contenu
                                 web.send(page_html())                    #et là tu met le sauce
+                        else:
+                                web.send('\rRequête non valide.\n')
                         web.close()                                      #et on ferme
                         
                 #Si ce n'est pas une connexion, alors c'est un message reçu
