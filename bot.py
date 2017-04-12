@@ -189,6 +189,42 @@ def test5() :
 
     client.send("\quit")
     client.close()
+
+#Commandes \list
+def test6() :
+    client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    client.connect((host, port))
+    client.send("bot1")
+    time.sleep(1)
+    message_de_connexion_1 = client.recv(4096)
+    client.send("\list\n")
+    message = client.recv(4096)
+    match = re.match("| Clients connectés sur le serveur |", message)
+    if match:
+        print("Test commande \\list : ok")
+    else :
+        print("Test commande \\list : fail")
+
+    client.send("\quit")
+    client.close()
+
+#Commandes \command
+def test7() :
+    client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    client.connect((host, port))
+    client.send("bot1")
+    time.sleep(1)
+    message_de_connexion_1 = client.recv(4096)
+    client.send("\command\n")
+    message = client.recv(4096)
+    match = re.match("|     Commandes disponibles     |", message)
+    if match:
+        print("Test commande \\command : ok")
+    else :
+        print("Test commande \\command : fail")
+
+    client.send("\quit")
+    client.close()
     
 
 pid = os.fork()
@@ -201,5 +237,7 @@ else:
     test3()
     test4()
     test5()
+    test6()
+    test7()
     
 sys.exit()
