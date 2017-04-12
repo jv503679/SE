@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-import sys, socket, os, select, time , re
+import sys, socket, os, select, time, re
 
 #Programme qui permet de tester le bon fonctionnement de chat client/serveur
 #Test :
@@ -139,9 +139,7 @@ def test3() :
                     print("Test réception multiple : fail")
                     sys.exit()
     client1.send("\quit")
-    time.sleep(1)
     client2.send("\quit")
-    time.sleep(1)
     client3.send("\quit")
     time.sleep(1)
     client1.close()
@@ -176,18 +174,21 @@ def test4():
 
 #Commandes \info
 def test5() :
-    client1 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    client1.connect((host, port))
-    client1.send("bot1")
+    client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    client.connect((host, port))
+    client.send("bot1")
     time.sleep(1)
-    message_de_connexion_1 = client1.recv(4096)
-    client1.send("\info\n")
-    message_1 = client1.recv(4096)
-    match = re.match("| Information sur le serveur |", message_1)
+    message_de_connexion_1 = client.recv(4096)
+    client.send("\info\n")
+    message = client.recv(4096)
+    match = re.match("| Information sur le serveur |", message)
     if match:
         print("Test commande \\info : ok")
     else :
         print("Test commande \\info : fail")
+
+    client.send("\quit")
+    client.close()
     
 
 pid = os.fork()
