@@ -129,7 +129,7 @@ def search_user_socket(username, socklist):
         if(user):
                 user = user[0]
                 for socket in socklist:
-                        if socket != server:
+                        if socket != server and socket != server_web:
                                 u = socket.getpeername()
                                 if u == user:
                                         return socket
@@ -273,7 +273,7 @@ while True:
                         #En cas d'erreur, on déconnecte le client ayant engendré l'erreur, et on continue le programme (pas de plantage du serveur)
                         except:
                                 send_to_all_users(server, "\r<SERVEUR> ({}) {}".format(time.strftime("%H:%M"), client[user]), " s'est déconnecté\n")
-                                print("{} : {} s'est connecté {}".format(time.strftime("%H:%M:%S"),client[user], user))
+                                print("{} : {} s'est déconnecté {}".format(time.strftime("%H:%M:%S"),client[user], user))
                                 del client[user]
                                 socket.close()
                                 socketlist.remove(socket)
