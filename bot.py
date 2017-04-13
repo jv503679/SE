@@ -11,8 +11,6 @@ import sys, socket, os, select, time, re
 # - Réception du message
 # - Envoi multiple / Reception multiple
 # - Connexion web - recupération des derniers messages
-# - Commandes
-# - Message privé
 #
 #On utilise le modèle père/fils pour tester l'envoi/réception.
 
@@ -293,6 +291,13 @@ def test8():
                 print("Test de message privé : ok")
                 test = False
 
+    client.send("\quit")
+    receveur.send("\quit")
+    observer.send("\quit")
+    time.sleep(1)
+    client.close()
+    receveur.close()
+    observer.close()
     
 pid = os.fork()
 if pid == 0:
