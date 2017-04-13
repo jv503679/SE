@@ -11,6 +11,8 @@ import sys, socket, os, select, time, re
 # - Réception du message
 # - Envoi multiple / Reception multiple
 # - Connexion web - recupération des derniers messages
+# - Commandes
+# - Message privé
 #
 #On utilise le modèle père/fils pour tester l'envoi/réception.
 
@@ -225,8 +227,73 @@ def test7() :
 
     client.send("\quit")
     client.close()
-    
 
+#Message privé
+def test8():
+    #Client va envoyer un message, puis un message privé à receveur
+    client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    client.connect((host, port))
+    client.send("client")
+    m = client.recv(4096)
+
+    #Reçoit le message privé
+    receveur = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    receveur.connect((host, port))
+    receveur.send("receveur")
+    m = receveur.recv(4096)
+
+    #Permet de vérifier que le message privé est envoyé seulement au destinataire
+    observer = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    observer.connect((host, port))
+    observer.send("observer")
+    m = observer.recv(4096)
+
+    message = "Coucou tout le monde\n"
+    message_prive = "@receveur Coucou receveur\n"
+    message_erreur = "@dalle Une bonne note svp\n"
+
+    test = True
+
+    msg = "\rclient >> Coucou tout le monde"
+    msg_p = "\rfrom client: Coucou receveur"
+    msg_e = "\r<SERVEUR> Client introuvable ! (\list pour la liste des clients)"
+    
+    socketlist = [client,receveur,observer]
+
+    #On attend ici...
+    msg_obs = ""  #Coucou tout le monde
+    msg_rec = ""  #Coucou receveur
+    msg_cli = ""  #Client introuvable!
+
+    
+    client.send(message)
+    time.sleep(1)
+    client.send(message_erreur)
+    time.sleep(1)
+    client.send(message_prive)
+    
+    while test:
+        ready, write, error = select.select(socketlist, [], [])
+            
+        for s in ready:
+            if s == client:
+                msg_cli = s.recv(4096).split("\n")
+                #Dernier message reçu (fini par \n, donc on prend -2 pour avoir le message plutot que "" pour -1)
+                msg_cli = msg_cli[len(msg_cli)-2]
+                
+            if s == receveur:
+                msg_rec = s.recv(4096).split("\n")
+                msg_rec = msg_rec[len(msg_rec)-2]
+                
+            if s == observer:
+                msg_obs = s.recv(4096).split("\n")
+                msg_obs = msg_obs[len(msg_obs)-2]
+                
+            if msg_cli == msg_e and msg_obs == msg and msg_rec == msg_p:
+                print("Test de message privé : ok")
+                test = False
+
+    
 pid = os.fork()
 if pid == 0:
     os.system("xterm -e python server.py 2555 2556")
@@ -239,5 +306,6 @@ else:
     test5()
     test6()
     test7()
+    test8()
     
 sys.exit()
