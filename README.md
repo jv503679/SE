@@ -11,3 +11,4 @@ Gestion des commandes (\quit, \list, \info, \command)
 7 avril : Premier upload du projet : serveur + client (sans web)  
 
 ## MALALEL Steve
+13 avril : Ajout de divers tests pour évaluer les fonctionnalités du serveur et du client
