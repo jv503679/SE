@@ -27,6 +27,7 @@ socketlist = []
 client = {}
 saved_messages = Queue()
 max_saved_messages = 5
+TIMEOUT_TIME = 3.0
 
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1) #evite l'erreur "Adress already in use" lorsqu'on relance le serveur sur le même (ip,port)
@@ -247,14 +248,28 @@ while True:
 
                 elif socket == server_web:
                         web, ipport = server_web.accept()
-                        request = web.recv(4096)
-                        request = re.match("GET / HTTP/", request)
-                        if request:
-                                web.send('HTTP/1.0 200 OK\n')            #on répond à la requete
-                                web.send('Content-Type: text/html\n\n')  #on annonce le type de contenu
-                                web.send(page_html())                    #et là tu met le sauce
-                        else:
-                                web.send('\rRequête non valide.\n')
+                        print("WEB : {} : {} s'est connecté".format(time.strftime("%H:%M:%S"), ipport))
+                        web.settimeout(TIMEOUT_TIME)  #on met un timeout sur le socket (3.0 secondes par défaut)
+                        
+                        #Dans le cas du timeout, s'il arrive à terme, produit une exception.
+                        #On lance donc le tout dans un try/except (except étant le timeout)
+                        try:
+                                request = web.recv(4096)
+                                request = re.match("GET / HTTP/", request)
+                                if request:
+                                        web.send('HTTP/1.0 200 OK\n')            #on répond à la requete
+                                        web.send('Content-Type: text/html\n\n')  #on annonce le type de contenu
+                                        web.send(page_html())                    #et là tu met le sauce
+                                        print("WEB : Contenu envoyé à {}".format(ipport))
+                                else:
+                                        web.send('\rRequête non valide.\n')
+                                        print("WEB : Requête invalide de {}".format(ipport))
+                                print("WEB : {} - Déconnexion de {}".format(time.strftime("%H:%M:%S"), ipport))
+                                
+                        #Aucune requête, timeout du socket
+                        except:
+                                print("WEB : TIMEOUT de {}, aucune requête reçue".format(ipport))
+                                pass
                         web.close()                                      #et on ferme
                         
                 #Si ce n'est pas une connexion, alors c'est un message reçu
