@@ -150,23 +150,28 @@ def test3() :
 def test4():
     client_web = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     fake_client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    timeout_test = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     
     client_web.connect((host, port_web))
     fake_client.connect((host, port_web))
+    timeout_test.connect((host, port_web))
     
     client_web.send("GET / HTTP/1.0")
     fake_client.send("Coucou passe le web stp")
     
     html = client_web.recv(4096)
     error = fake_client.recv(4096)
+    timeout = timeout_test.recv(4096)
 
     client_web.close()
     fake_client.close()
+    timeout_test.close()
 
     match_web = re.match("HTTP/1.0 200 OK\n", html)
     match_err = re.match('\rRequête non valide.\n', error)
+    match_to = re.match('\rTIMEOUT - Aucune requête', timeout)
     
-    if match_web and match_err :
+    if match_web and match_err and match_to:
         print("Test web : ok")
     else:
         print("Test web : fail")
@@ -222,10 +227,8 @@ def test7() :
         print("Test commande \\command : ok")
     else :
         print("Test commande \\command : fail")
-    try:
-        client.send("\quit")
-    except:
-        pass
+        
+    client.send("\quit")
     client.close()
 
 #Message privé
