@@ -14,7 +14,6 @@ if(len(sys.argv) != 3) :
         print("Erreur : mauvais nombre d'arguments.\npython server.py port port_web")
         sys.exit()
         
-ip = "localhost"
 try:
         port = int(sys.argv[1])
         port_web = int(sys.argv[2])
@@ -26,8 +25,9 @@ socketlist = []
 
 client = {}
 saved_messages = Queue()
-max_saved_messages = 5
-TIMEOUT_TIME = 3.0
+ip = "localhost"          #DEFAUT : "localhost"
+max_saved_messages = 5    #DEFAUT : 5
+TIMEOUT_TIME = 3.0        #DEFAUT : 3.0
 
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1) #evite l'erreur "Adress already in use" lorsqu'on relance le serveur sur le même (ip,port)
@@ -42,12 +42,12 @@ except:
         print("Erreur: port incorrect")
         sys.exit()
         
-server.listen(10)
-server_web.listen(10)
+server.listen(10)      #DEFAUT : 10
+server_web.listen(10)  #DEFAUT : 10
 
 SHUT_RDWR = socket.SHUT_RDWR
 
-socketlist.append(server) #on rajoute le serveur à la liste des sockets
+socketlist.append(server)     #on rajoute le serveur à la liste des sockets
 socketlist.append(server_web) #on rajoute également le serveur web
 
 #Message de lancement du serveur
