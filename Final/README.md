@@ -9,7 +9,7 @@ Programme du serveur
 ## client.py
 Programme du client
 ## bot.py
-Programme de test du client et du serveur principal
+Programme principal de test du client et du serveur 
 ## cbot1.py
 Programme du bot de test d'envoi du message via le client
 ## cbot2.py
